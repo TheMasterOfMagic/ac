@@ -13,8 +13,11 @@ class File(db.Model):
     @classmethod
     def upload_file(cls, user, data):
         from hashlib import sha512
+        from config import allowed_file_suffix_list
         filename = data.filename
         assert len(filename) <= 64, 'filename too long (>64B)'
+        filename_suffix = filename.rsplit('.', maxsplit=1)[-1]
+        assert filename_suffix in allowed_file_suffix_list, 'banned file type'
         f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
         assert not f, 'file already exists'
         content = data.read()
