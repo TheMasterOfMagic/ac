@@ -11,11 +11,14 @@
         {% endfor %}
     {% endwith %}
     <p>{{username}}，您好！</p>
-    {% if filenames %}
+    {% if files %}
         <p>您当前上传了以下文件</p>
         <ui>
-        {% for filename in filenames %}
-            <li>{{filename}}</li>
+        {% for file in files %}
+            <li>
+                {{file.filename}}
+                <a href="/file/remove?filename={{file.filename}}">删除</a>
+            </li>
         {% endfor %}
         </ui>
     {% else %}
