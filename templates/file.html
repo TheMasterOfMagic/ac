@@ -5,6 +5,11 @@
     <title>文件</title>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p>{{message}}</p>
+        {% endfor %}
+    {% endwith %}
     <p>{{username}}，您好！</p>
     {% if filenames %}
         <p>您当前上传了以下文件</p>
@@ -16,6 +21,7 @@
     {% else %}
         <p>您当前没有上传任何文件</p>
     {% endif %}
+    <a href="/file/upload">上传</a>
     <a href="/logout">退出</a>
 </body>
 </html>
