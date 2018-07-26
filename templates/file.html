@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文件</title>
+</head>
+<body>
+    <p>{{username}}，您好！</p>
+    {% if filenames %}
+        <p>您当前上传了以下文件</p>
+        <ui>
+        {% for filename in filenames %}
+            <li>{{filename}}</li>
+        {% endfor %}
+        </ui>
+    {% else %}
+        <p>您当前没有上传任何文件</p>
+    {% endif %}
+    <a href="/logout">退出</a>
+</body>
+</html>

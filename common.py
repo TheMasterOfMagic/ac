@@ -14,6 +14,7 @@ def eprint(*args, **kwargs):
 def login_required(func):
     from flask import request, redirect
     from functools import wraps
+    from models import User
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -22,6 +23,8 @@ def login_required(func):
         record = OnlineUser.verify_token(token)
         if record:
             token = OnlineUser.create_record(record.id_)
+            if 'user' in func.__code__.co_varnames:
+                kwargs['user'] = User.get_by(id_=record.id_)
             return set_token(func(*args, **kwargs), token)
         else:
             return redirect('/login')
