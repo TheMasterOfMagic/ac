@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+</head>
+<body>
+    {% if message %}
+    <p style="color:red">{{ message }}</p>
+    {% endif %}
+    <form action="/register/" method="post">
+        <p>{{ form.username(placeholder='用户名') }}</p>
+        <p>{{ form.password }}</p>
+        <p>{{ form.confirm_password}}</p>
+        <p>{{ form.csrf_token }}</p>
+
+        <p><input type="submit" value="注册"></p>
+    </form>
+</body>
+</html>
