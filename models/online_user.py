@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy import TIMESTAMP
-from sqlalchemy.sql import func
 from database import db
 from common import *
 
@@ -10,7 +9,7 @@ class OnlineUser(db.Model):
 
     id_ = Column(Integer, ForeignKey('users.id_'), primary_key=True, autoincrement=True)
     token = Column(String(32), primary_key=True)
-    last_used = Column(TIMESTAMP, default=func.now())
+    last_used = Column(TIMESTAMP)
 
     @classmethod
     def new_available_token(cls):
@@ -31,6 +30,7 @@ class OnlineUser(db.Model):
         record = cls.get_by(id_=id_)
         if record is None:
             record = OnlineUser(id_=id_, token=token)
+            record.last_used = datetime.now()
             db.session.add(record)
         else:
             record.token = token
@@ -51,7 +51,7 @@ class OnlineUser(db.Model):
 
     @classmethod
     def verify_token(cls, token):
-        from datetime import datetime, timedelta
+        from datetime import datetime
         from config import token_expired
         record = cls.get_by(token=token)
         if record is not None:
