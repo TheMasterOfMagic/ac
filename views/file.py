@@ -63,3 +63,18 @@ def get__download(user):
         message = e.args[0] if len(e.args) else str(e)
         flash('下载失败！'+message)
         return redirect('/file')
+
+
+@file.route('/share')
+@login_required
+def get__share(user):
+    try:
+        filename = request.args.get('filename')
+        assert filename, 'missing filename'
+        File.share_file(user, filename)
+        flash('设置成功！')
+        return redirect('/file')
+    except AssertionError as e:
+        message = e.args[0] if len(e.args) else str(e)
+        flash('设置失败！'+message)
+        return redirect('/file')

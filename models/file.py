@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, and_
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, and_
 from os import remove, path, mkdir
 import re
 from aes import encrypt, decrypt
@@ -13,6 +13,7 @@ class File(db.Model):
     creator_id = Column(Integer, ForeignKey('users.id_', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     filename = Column(String(64), primary_key=True)
     hash_value = Column(String(128))
+    shared = Column(Boolean, default=False)
 
     @classmethod
     def upload_file(cls, user, data):
@@ -88,3 +89,10 @@ class File(db.Model):
         response = make_response(content)
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         return response
+
+    @classmethod
+    def share_file(cls, user, filename):
+        f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
+        assert f, 'no such file ({})'.format(filename)
+        f.shared = not f.shared
+        db.session.commit()
