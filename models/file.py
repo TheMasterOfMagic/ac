@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, and_
 from os import remove, path, mkdir
 import re
+from aes import encrypt, decrypt
 from database import db
 from config import storage_path
 
@@ -27,7 +28,9 @@ class File(db.Model):
         content = data.read()
         assert len(content) < 1*1024*1024, 'file too large (>=10MB)'
         creator_id = user.id_
-        hash_value = sha512(content).hexdigest()
+        hash_value = sha512(content).hexdigest()  # 先计算哈希
+        print(content)
+        content = encrypt(content, user.symmetric_key)  # 再进行加密（换句话说这个哈希值的是原文件的哈希值）
         user_id = str(user.id_)+'/'
         if not path.exists(storage_path+user_id):
             mkdir(storage_path+user_id)
@@ -58,6 +61,7 @@ class File(db.Model):
         hash_value = f.hash_value
         with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
             content = f_.read()
+        content = decrypt(content, user.symmetric_key)
         response = make_response(content)
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         print(response.headers['Content-Disposition'])

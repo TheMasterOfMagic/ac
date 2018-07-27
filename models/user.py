@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Binary
 from sqlalchemy import TIMESTAMP
 from sqlalchemy.sql import func
 from database import db
@@ -11,6 +11,7 @@ class User(db.Model):
     create_time = Column(TIMESTAMP, default=func.now())
     username = Column(String(64))
     hash_password = Column(String(128))
+    symmetric_key = Column(Binary(16*8), nullable=False)
 
     @classmethod
     def get_by(cls, **kwargs):
@@ -18,8 +19,10 @@ class User(db.Model):
 
     @classmethod
     def create_user(cls, username, hash_password):
+        from uuid import uuid4
         user = User.get_by(username=username)
         assert user is None, 'email already registered'
-        user = User(username=username, hash_password=hash_password)
+        symmetric_key = uuid4().bytes
+        user = User(username=username, hash_password=hash_password, symmetric_key=symmetric_key)
         db.session.add(user)
         db.session.commit()
