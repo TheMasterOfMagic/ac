@@ -28,17 +28,24 @@ class File(db.Model):
         assert not f, 'file already exists'
         content = data.read()
         assert len(content) < 1*1024*1024, 'file too large (>=10MB)'
-        creator_id = user.id_
-        # 先计算哈希
-        hash_value = sha512(content).hexdigest()
-        # 再进行加密（换句话说这个哈希值的是原文件的哈希值）。加密前得先还原出对称密钥。
-        content = encrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
         user_id = str(user.id_)+'/'
         if not path.exists(storage_path+user_id):
             mkdir(storage_path+user_id)
+        # 计算原文件的哈希
+        hash_value = sha512(content).hexdigest()
+        # 判断文件是否存在
         if not path.exists(storage_path+user_id+hash_value):
+            # 加密并存储。加密前得先还原出对称密钥。
+            private_key = RSAPrivateKey().load('config/key.pem')
+            content = encrypt(content, private_key.decrypt(user.encrypted_symmetric_key))
+            # 同时计算签名
+            signature = private_key.sign(content)
+            # 保存密文与签名
             with open(storage_path+user_id+hash_value, 'wb') as f:
                 f.write(content)
+            with open(storage_path+user_id+'sig_'+hash_value, 'wb') as f:
+                f.write(signature)
+        creator_id = user.id_
         file = File(creator_id=creator_id, filename=filename, hash_value=hash_value)
         db.session.add(file)
         db.session.commit()
@@ -53,6 +60,7 @@ class File(db.Model):
         files = File.query.filter(File.hash_value == hash_value).all()
         if not len(files):
             remove(storage_path+str(user.id_)+'/'+hash_value)
+            remove(storage_path+str(user.id_)+'/'+'sig_'+hash_value)
 
     @classmethod
     def download_file(cls, user, filename):
