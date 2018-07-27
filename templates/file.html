@@ -17,6 +17,7 @@
         {% for file in files %}
             <li>
                 {{file.filename}}
+                <a href="/file/download?filename={{file.filename}}">下载</a>
                 <a href="/file/remove?filename={{file.filename}}">删除</a>
             </li>
         {% endfor %}

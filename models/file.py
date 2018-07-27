@@ -1,7 +1,10 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, and_
 from os import remove, path, mkdir
+import re
 from database import db
 from config import storage_path
+
+filename_pattern = re.compile(r'[^\u4e00-\u9fa5]+')
 
 
 class File(db.Model):
@@ -16,6 +19,7 @@ class File(db.Model):
         from config import allowed_file_suffix_list
         filename = data.filename
         assert len(filename) <= 64, 'filename too long (>64B)'
+        assert filename_pattern.fullmatch(filename), 'no unicode character allowed'
         filename_suffix = filename.rsplit('.', maxsplit=1)[-1]
         assert filename_suffix in allowed_file_suffix_list, 'banned file type'
         f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
@@ -44,3 +48,17 @@ class File(db.Model):
         files = File.query.filter(File.hash_value == hash_value).all()
         if not len(files):
             remove(storage_path+str(user.id_)+'/'+hash_value)
+
+    @classmethod
+    def download_file(cls, user, filename):
+        from flask import make_response
+        print(filename)
+        f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
+        assert f, 'no such file ({})'.format(filename)
+        hash_value = f.hash_value
+        with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
+            content = f_.read()
+        response = make_response(content)
+        response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+        print(response.headers['Content-Disposition'])
+        return response

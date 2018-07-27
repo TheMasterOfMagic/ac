@@ -48,3 +48,16 @@ def get__remove(user):
         message = e.args[0] if len(e.args) else str(e)
         flash('删除失败！'+message)
     return redirect('/file')
+
+
+@file.route('/download')
+@login_required
+def get__download(user):
+    try:
+        filename = request.args.get('filename')
+        assert filename, 'missing filename'
+        return File.download_file(user, filename)
+    except AssertionError as e:
+        message = e.args[0] if len(e.args) else str(e)
+        flash('下载失败！'+message)
+        return redirect('/file')
