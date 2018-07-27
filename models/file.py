@@ -43,7 +43,7 @@ class File(db.Model):
             # 保存密文与签名
             with open(storage_path+user_id+hash_value, 'wb') as f:
                 f.write(content)
-            with open(storage_path+user_id+'sig_'+hash_value, 'wb') as f:
+            with open(storage_path+user_id+hash_value+'.sig', 'wb') as f:
                 f.write(signature)
         creator_id = user.id_
         file = File(creator_id=creator_id, filename=filename, hash_value=hash_value)
@@ -60,18 +60,28 @@ class File(db.Model):
         files = File.query.filter(File.hash_value == hash_value).all()
         if not len(files):
             remove(storage_path+str(user.id_)+'/'+hash_value)
-            remove(storage_path+str(user.id_)+'/'+'sig_'+hash_value)
+            remove(storage_path+str(user.id_)+'/'+hash_value+'.sig')
 
     @classmethod
-    def download_file(cls, user, filename):
+    def download_file(cls, user, filename, type_):
         from flask import make_response
-        from rsa import RSAPrivateKey
         f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
         assert f, 'no such file ({})'.format(filename)
         hash_value = f.hash_value
-        with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
-            content = f_.read()
-        content = decrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
+        if type_ == 'signature':
+            # 读取签名
+            with open(storage_path+str(user.id_)+'/'+hash_value+'.sig', 'rb') as f_:
+                content = f_.read()
+                filename = filename+'.sig'
+        else:
+            # 读取密文
+            with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
+                content = f_.read()
+            if type_ == 'plaintext':
+                from rsa import RSAPrivateKey
+                content = decrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
+            elif type_ == 'encrypted':
+                filename = filename + '.encrypted'
         response = make_response(content)
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         return response
