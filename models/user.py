@@ -9,7 +9,7 @@ class User(db.Model):
 
     id_ = Column(Integer, primary_key=True, autoincrement=True)
     create_time = Column(TIMESTAMP, default=func.now())
-    username = Column(String(64))
+    username = Column(String(64), unique=True)
     hash_password = Column(String(128))
     encrypted_symmetric_key = Column(Binary(2048), nullable=False)
 

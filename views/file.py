@@ -58,6 +58,7 @@ def get__download(user):
         assert filename, 'missing filename'
         type_ = request.args.get('type')
         assert type_, 'missing type'
+        assert type_ in ('encrypted', 'plaintext', 'signature'), 'unknown type'
         return File.download_file(user, filename, type_)
     except AssertionError as e:
         message = e.args[0] if len(e.args) else str(e)

@@ -18,6 +18,7 @@ def main():
     app.register_blueprint(login, url_prefix='/login')
     app.register_blueprint(logout, url_prefix='/logout')
     app.register_blueprint(file, url_prefix='/file')
+    app.register_blueprint(shared_file, url_prefix='/shared_file')
 
     run(app)
 
