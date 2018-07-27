@@ -18,6 +18,7 @@ class File(db.Model):
     def upload_file(cls, user, data):
         from hashlib import sha512
         from config import allowed_file_suffix_list
+        from rsa import RSAPrivateKey
         filename = data.filename
         assert len(filename) <= 64, 'filename too long (>64B)'
         assert filename_pattern.fullmatch(filename), 'no unicode character allowed'
@@ -28,9 +29,10 @@ class File(db.Model):
         content = data.read()
         assert len(content) < 1*1024*1024, 'file too large (>=10MB)'
         creator_id = user.id_
-        hash_value = sha512(content).hexdigest()  # 先计算哈希
-        print(content)
-        content = encrypt(content, user.symmetric_key)  # 再进行加密（换句话说这个哈希值的是原文件的哈希值）
+        # 先计算哈希
+        hash_value = sha512(content).hexdigest()
+        # 再进行加密（换句话说这个哈希值的是原文件的哈希值）。加密前得先还原出对称密钥。
+        content = encrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
         user_id = str(user.id_)+'/'
         if not path.exists(storage_path+user_id):
             mkdir(storage_path+user_id)
@@ -55,14 +57,13 @@ class File(db.Model):
     @classmethod
     def download_file(cls, user, filename):
         from flask import make_response
-        print(filename)
+        from rsa import RSAPrivateKey
         f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
         assert f, 'no such file ({})'.format(filename)
         hash_value = f.hash_value
         with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
             content = f_.read()
-        content = decrypt(content, user.symmetric_key)
+        content = decrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
         response = make_response(content)
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
-        print(response.headers['Content-Disposition'])
         return response
