@@ -68,7 +68,10 @@ class File(db.Model):
         f = File.query.filter(and_(File.creator_id == user.id_, File.filename == filename)).first()
         assert f, 'no such file ({})'.format(filename)
         hash_value = f.hash_value
-        if type_ == 'signature':
+        if type_ == 'hashvalue':
+            content = hash_value
+            filename = filename + '.hash'
+        elif type_ == 'signature':
             # 读取签名
             with open(storage_path+str(user.id_)+'/'+hash_value+'.sig', 'rb') as f_:
                 content = f_.read()

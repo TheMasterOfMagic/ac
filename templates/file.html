@@ -18,6 +18,7 @@
             <li>
                 {{file.filename}}(已加密)
                 <a href="/file/download?filename={{file.filename}}&type=encrypted">下载</a>
+                <a href="/file/download?filename={{file.filename}}&type=hashvalue">下载哈希值</a>
                 <a href="/file/download?filename={{file.filename}}&type=plaintext">解密并下载</a>
                 <a href="/file/download?filename={{file.filename}}&type=signature">下载签名文件</a>
                 <a href="/file/remove?filename={{file.filename}}">删除</a>
