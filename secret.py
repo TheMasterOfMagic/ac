@@ -41,3 +41,7 @@ def symmetric_encrypt(symmetric_key: bytes, plaintext: bytes):
 
 def symmetric_decrypt(symmetric_key: bytes, ciphertext: bytes):
     return SecretBox(symmetric_key).decrypt(ciphertext)
+
+
+def get_pk_raw():
+    return PrivateKey(sk_raw).public_key.encode()
