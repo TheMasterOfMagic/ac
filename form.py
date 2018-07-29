@@ -8,7 +8,7 @@ class PasswordForm(FlaskForm):
 
     def get_hash_password(self):
         from hashlib import sha512
-        return sha512(self.password.data.encode()).hexdigest()
+        return sha512(self.password.data.encode()).digest()
 
 
 class RegisterForm(PasswordForm):
