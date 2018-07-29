@@ -4,6 +4,7 @@ import re
 from aes import encrypt, decrypt
 from database import db
 from config import storage_path
+import secret
 
 filename_pattern = re.compile(r'[^\u4e00-\u9fa5]+')
 
@@ -19,7 +20,6 @@ class File(db.Model):
     def upload_file(cls, user, data):
         from hashlib import sha512
         from config import allowed_file_suffix_list
-        from rsa import RSAPrivateKey
         filename = data.filename
         assert len(filename) <= 64, 'filename too long (>64B)'
         assert filename_pattern.fullmatch(filename), 'no unicode character allowed'
@@ -31,16 +31,17 @@ class File(db.Model):
         assert len(content) < 1*1024*1024, 'file too large (>=10MB)'
         user_id = str(user.id_)+'/'
         if not path.exists(storage_path+user_id):
+            if not path.exists(storage_path):
+                mkdir(storage_path)
             mkdir(storage_path+user_id)
         # 计算原文件的哈希
         hash_value = sha512(content).hexdigest()
         # 判断文件是否存在
         if not path.exists(storage_path+user_id+hash_value):
             # 加密并存储。加密前得先还原出对称密钥。
-            private_key = RSAPrivateKey().load('config/key.pem')
-            content = encrypt(content, private_key.decrypt(user.encrypted_symmetric_key))
+            content = encrypt(content, secret.decrypt(user.encrypted_symmetric_key))
             # 同时计算签名
-            signature = private_key.sign(content)
+            signature = secret.sign(content)
             # 保存密文与签名
             with open(storage_path+user_id+hash_value, 'wb') as f:
                 f.write(content)
@@ -82,8 +83,7 @@ class File(db.Model):
             with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
                 content = f_.read()
             if type_ == 'plaintext':
-                from rsa import RSAPrivateKey
-                content = decrypt(content, RSAPrivateKey().load('config/key.pem').decrypt(user.encrypted_symmetric_key))
+                content = decrypt(content, secret.decrypt(user.encrypted_symmetric_key))
             elif type_ == 'encrypted':
                 filename = filename + '.encrypted'
         response = make_response(content)
