@@ -12,6 +12,8 @@ class User(db.Model):
     username = Column(String(64), unique=True)
     hash_password = Column(Binary(64))
     encrypted_symmetric_key = Column(Binary(32), nullable=False)
+    encrypted_private_key = Column(Binary(32), nullable=False)
+    encrypted_public_key = Column(Binary(32), nullable=False)
 
     @classmethod
     def get_by(cls, **kwargs):
@@ -22,10 +24,14 @@ class User(db.Model):
         import secret
         user = User.get_by(username=username)
         assert user is None, 'email already registered'
-        # 先随机生成一个对称密钥
+        # 先随机生成一个用户的对称密钥与公私钥
         symmetric_key = secret.new_symmetric_key()
-        # 再用服务器的私钥加密该对称密钥
-        encrypted_symmetric_key = secret.encrypt(symmetric_key)
-        user = User(username=username, hash_password=hash_password, encrypted_symmetric_key=encrypted_symmetric_key)
+        private_key, public_key = secret.new_pair()
+        # 再用服务器的私钥加密这些密钥
+        user = User(username=username, hash_password=hash_password,
+                    encrypted_symmetric_key=secret.encrypt(symmetric_key),
+                    encrypted_private_key=secret.encrypt(private_key),
+                    encrypted_public_key=secret.encrypt(public_key)
+                    )
         db.session.add(user)
         db.session.commit()
