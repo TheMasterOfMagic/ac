@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, and_
 from os import remove, path, mkdir
 import re
-from aes import encrypt, decrypt
 from database import db
 from config import storage_path
 import secret
@@ -39,7 +38,7 @@ class File(db.Model):
         # 判断文件是否存在
         if not path.exists(storage_path+user_id+hash_value):
             # 加密并存储。加密前得先还原出对称密钥。
-            content = encrypt(content, secret.decrypt(user.encrypted_symmetric_key))
+            content = secret.symmetric_encrypt(secret.decrypt(user.encrypted_symmetric_key), content)
             # 同时计算签名
             signature = secret.sign(content)
             # 保存密文与签名
@@ -83,7 +82,7 @@ class File(db.Model):
             with open(storage_path+str(user.id_)+'/'+hash_value, 'rb') as f_:
                 content = f_.read()
             if type_ == 'plaintext':
-                content = decrypt(content, secret.decrypt(user.encrypted_symmetric_key))
+                content = secret.symmetric_decrypt(secret.decrypt(user.encrypted_symmetric_key), content)
             elif type_ == 'encrypted':
                 filename = filename + '.encrypted'
         response = make_response(content)

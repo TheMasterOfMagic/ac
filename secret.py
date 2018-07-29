@@ -1,5 +1,7 @@
 from nacl.public import PrivateKey, SealedBox
 from nacl.signing import SigningKey
+from nacl.secret import SecretBox
+from nacl.utils import random
 from os.path import exists
 from config import nacl_sk_path
 
@@ -27,3 +29,15 @@ def sign(message: bytes):
 
 def verify(message: bytes, signature: bytes):
     return SigningKey(sk_raw).verify_key.verify(message, signature)
+
+
+def new_symmetric_key():
+    return random(SecretBox.KEY_SIZE)
+
+
+def symmetric_encrypt(symmetric_key: bytes, plaintext: bytes):
+    return SecretBox(symmetric_key).encrypt(plaintext)
+
+
+def symmetric_decrypt(symmetric_key: bytes, ciphertext: bytes):
+    return SecretBox(symmetric_key).decrypt(ciphertext)
