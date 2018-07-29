@@ -27,7 +27,7 @@ class User(db.Model):
         # 先随机生成一个用户的对称密钥与公私钥
         symmetric_key = secret.new_symmetric_key()
         private_key, public_key = secret.new_pair()
-        # 再用服务器的私钥加密这些密钥
+        # 再用服务器的公钥加密这些密钥
         user = User(username=username, hash_password=hash_password,
                     encrypted_symmetric_key=secret.encrypt(symmetric_key),
                     encrypted_private_key=secret.encrypt(private_key),
